@@ -1,0 +1,32 @@
+#!/usr/bin/php -q
+<?PHP
+/* docker-steward-selftest [--check <container>]
+ * Verifies that everything Docker Steward needs from this Unraid version is present, and that
+ * the container list can be built. With --check, also runs one real (read-only) registry check.
+ * Exit 0 = ok or untested version, 1 = degraded or broken. */
+$docroot = '/usr/local/emhttp';
+require_once "$docroot/plugins/docker.steward/php/lib.php";
+
+$c = stw_compat();
+echo "Unraid version : ", $c['unraid'] ?: 'unknown', "\n";
+echo "Tested on      : ", implode(', ', $c['tested']) ?: 'nothing recorded', " (minimum {$c['min']})\n";
+echo "Compatibility  : {$c['level']}\n";
+foreach ($c['problems'] as $p) echo "  - $p\n";
+$ok = $c['lists'];
+if ($ok) {
+  $s = stw_snapshot();
+  $n = count($s['rows']);
+  echo "Containers     : $n\n";
+  $by = array_count_values(array_column($s['rows'], 'verdict'));
+  echo "States         : ", json_encode($by), "\n";
+  $ok = $n > 0 || true;
+}
+$i = array_search('--check', $argv, true);
+if ($i !== false && $ok) {
+  $name = $argv[$i + 1] ?? '';
+  if (!stw_valid_name($name)) { echo "--check needs a valid container name\n"; exit(1); }
+  $r = stw_check($name);
+  echo "Check $name : ", json_encode($r), "\n";
+  if (($r['code'] ?? '') === 'unknown_container') $ok = false;
+}
+exit($ok && in_array($c['level'], ['ok', 'untested'], true) ? 0 : 1);

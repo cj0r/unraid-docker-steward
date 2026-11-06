@@ -1,0 +1,40 @@
+name: Bug report
+description: Something in Docker Steward isn't working
+title: "[bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Security problems go through the Security tab's "Report a vulnerability", not here.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Docker Steward version
+      description: Shown at the bottom of the page and on the Plugins page.
+      placeholder: 2026.11.07.1
+    validations:
+      required: true
+  - type: input
+    id: unraid
+    attributes:
+      label: Unraid version
+      placeholder: 7.3.1
+    validations:
+      required: true
+  - type: textarea
+    id: selftest
+    attributes:
+      label: Output of `docker-steward-selftest`
+      description: Run it in the Unraid terminal and paste the result.
+      render: text
+  - type: textarea
+    id: extra
+    attributes:
+      label: Browser console errors or screenshots (optional)

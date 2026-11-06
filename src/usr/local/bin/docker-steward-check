@@ -1,0 +1,25 @@
+#!/usr/bin/php -q
+<?PHP
+/* docker-steward-check <name> [--json]
+ * Checks one container's image against its registry and prints the result.
+ * Exit codes: 0 up to date, 10 update available, 2 check failed, 1 usage / unknown container. */
+$docroot = '/usr/local/emhttp';
+require_once "$docroot/plugins/docker.steward/php/lib.php";
+
+$args = array_slice($argv, 1);
+$json = in_array('--json', $args, true);
+$args = array_values(array_diff($args, ['--json']));
+if (count($args) !== 1 || !stw_valid_name($args[0])) {
+  fwrite(STDERR, "usage: docker-steward-check <container-name> [--json]\n");
+  exit(1);
+}
+$r = stw_check($args[0]);
+if (($r['code'] ?? '') === 'unknown_container') {
+  fwrite(STDERR, "unknown container: {$args[0]}\n");
+  exit(1);
+}
+if ($json) echo json_encode($r + ['name' => $args[0]]), "\n";
+elseif (!$r['ok']) echo "{$args[0]}: check failed (registry unreachable?)\n";
+elseif ($r['status'] === 'true') echo "{$args[0]}: up to date ({$r['local']})\n";
+else echo "{$args[0]}: update available ({$r['local']} -> {$r['remote']})\n";
+exit(!$r['ok'] ? 2 : ($r['status'] === 'true' ? 0 : 10));

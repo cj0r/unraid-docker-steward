@@ -1,0 +1,35 @@
+name: Release
+
+# Runs only in the public repo (cj0r/unraid-docker-steward), started by the tag that Publish pushes there.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write   # create the GitHub release
+
+jobs:
+  release:
+    if: github.repository == 'cj0r/unraid-docker-steward'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Tag matches the plugin version
+        run: |
+          want="$(sed -n 's/.*<!ENTITY version *"\([^"]*\)".*/\1/p' plugin/docker.steward.plg)"
+          test "v$want" = "$GITHUB_REF_NAME" || { echo "Tag $GITHUB_REF_NAME but the plugin says $want"; exit 1; }
+          echo "VERSION=$want" >> "$GITHUB_ENV"
+      - name: Package checksums match
+        run: |
+          md5=$(sed -n 's/.*<!ENTITY md5 *"\([^"]*\)".*/\1/p' plugin/docker.steward.plg)
+          sha=$(sed -n 's/.*<!ENTITY sha256 *"\([^"]*\)".*/\1/p' plugin/docker.steward.plg)
+          pkg="archive/docker.steward-$VERSION-noarch-1.txz"
+          echo "$md5  $pkg" | md5sum -c -
+          echo "$sha  $pkg" | sha256sum -c -
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          awk -v v="## $VERSION" '$0==v{f=1;next} /^## /{f=0} f' CHANGELOG.md > notes.md
+          gh release create "$GITHUB_REF_NAME" "archive/docker.steward-$VERSION-noarch-1.txz" \
+            --title "Docker Steward $VERSION" --notes-file notes.md

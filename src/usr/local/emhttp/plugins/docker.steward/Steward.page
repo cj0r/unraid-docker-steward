@@ -1,0 +1,47 @@
+Menu="Docker:2"
+Title="Docker Steward"
+Tag="refresh"
+Cond="is_file('/var/run/dockerd.pid')"
+Markdown="false"
+---
+<?PHP
+$base = '/plugins/docker.steward';
+?>
+<link rel="stylesheet" href="<?autov("$base/css/app.css")?>">
+
+<div id="stw" class="stw">
+  <p class="stw-status" aria-live="polite"><span id="stw-status">Loading containers…</span> <button type="button" id="stw-clear" class="stw-link" hidden>Clear selection</button></p>
+
+  <div id="stw-compat" class="stw-run" hidden></div>
+  <div id="stw-run" class="stw-run" hidden></div>
+
+  <div id="stw-barbox" class="stw-barbox">
+    <div id="stw-bar" class="stw-bar">
+      <div class="stw-find">
+        <input id="stw-q" class="stw-q" type="search" placeholder="Search containers  ( / )" autocomplete="off" aria-label="Search containers">
+        <label class="stw-sortbox">Sort
+          <select id="stw-sort" aria-label="Sort by">
+            <option value="n">Priority</option>
+            <option value="name">Name</option>
+            <option value="image">Image</option>
+            <option value="running">State</option>
+            <option value="checked">Last checked</option>
+          </select>
+        </label>
+        <button type="button" id="stw-dir" class="stw-btn stw-ghost stw-sq" aria-label="Reverse sort order">▲</button>
+      </div>
+      <div class="stw-acts">
+        <button type="button" id="stw-check-sel" class="stw-btn">Check</button>
+        <button type="button" id="stw-update-sel" class="stw-btn stw-main">Update</button>
+        <button type="button" id="stw-check-all" class="stw-btn">Check all</button>
+        <button type="button" id="stw-check-update" class="stw-btn stw-main">Check &amp; update</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="stw-groups" class="stw-groups"></div>
+  <p id="stw-foot" class="stw-foot"></p>
+  <div id="stw-menu" class="stw-menu" role="menu" hidden></div>
+</div>
+
+<script src="<?autov("$base/js/app.js")?>"></script>

@@ -1,0 +1,66 @@
+<?xml version='1.0' standalone='yes'?>
+<!DOCTYPE PLUGIN [
+<!ENTITY name      "docker.steward">
+<!ENTITY author    "cj0r">
+<!ENTITY version   "2026.11.07a">
+<!ENTITY md5       "4067866dc930e73349ce5431e961d114">
+<!ENTITY sha256    "da7a968bfca4dd25f04efd78ba24dc047680fc5e819c61b9606e2cde486c9df7">
+<!ENTITY launch    "Docker/Steward">
+<!ENTITY repo      "cj0r/unraid-docker-steward">
+<!ENTITY branch    "main">
+<!ENTITY gitURL    "https://raw.githubusercontent.com/&repo;/&branch;">
+<!ENTITY pluginURL "&gitURL;/plugin/&name;.plg">
+<!ENTITY pkgName   "&name;-&version;-noarch-1">
+<!ENTITY plgPATH   "/boot/config/plugins/&name;">
+<!ENTITY emhttp    "/usr/local/emhttp/plugins/&name;">
+]>
+
+<PLUGIN name="&name;"
+        author="&author;"
+        version="&version;"
+        launch="&launch;"
+        pluginURL="&pluginURL;"
+        icon="refresh"
+        min="7.0.0">
+
+<CHANGES>
+###2026.11.07a
+- First release. Per-container Check, Update and Re-check, a row menu (Check, Check and update now, Force update), and bulk Check selected, Update selected, Check all and Check and update
+- Containers grouped by Needs update, Not checked yet, Up to date and Cannot be updated here; search and sort; phone layout
+- Update runs continue in the background, with a live progress popup you can close and reopen
+- Results are Updated, Already current or Not applied, judged by what actually happened
+- Compatibility check with a clear notice when an Unraid version is not supported, and the tested versions listed on the page
+- docker-steward-check and docker-steward-selftest commands
+- Tested on Unraid 7.3.1
+</CHANGES>
+
+<!-- The package is cached on the flash drive and reinstalled from there at boot. -->
+<FILE Name="&plgPATH;/&pkgName;.txz" Run="upgradepkg --install-new">
+<URL>&gitURL;/archive/&pkgName;.txz</URL>
+<SHA256>&sha256;</SHA256>
+<MD5>&md5;</MD5>
+</FILE>
+
+<FILE Run="/bin/bash">
+<INLINE>
+# Clean up packages of older versions of this plugin.
+for f in &plgPATH;/&name;-*.txz; do
+  [ "$f" = "&plgPATH;/&pkgName;.txz" ] || rm -f "$f"
+done
+echo ""
+echo "----------------------------------------------------"
+echo " &name; &version; installed"
+echo " Open Docker > Docker Steward"
+echo "----------------------------------------------------"
+echo ""
+</INLINE>
+</FILE>
+
+<FILE Run="/bin/bash" Method="remove">
+<INLINE>
+removepkg &name;-* 2>/dev/null
+rm -rf &emhttp; &plgPATH; /tmp/&name; /usr/local/bin/docker-steward-check /usr/local/bin/docker-steward-selftest
+</INLINE>
+</FILE>
+
+</PLUGIN>

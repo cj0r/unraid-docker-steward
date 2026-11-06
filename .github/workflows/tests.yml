@@ -1,0 +1,21 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install PHP
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq php-cli
+      - name: Checks
+        run: ./scripts/check.sh
+      - name: Public material check (dev repo only)
+        run: if [ -f scripts/public-check.sh ]; then ./scripts/public-check.sh; fi

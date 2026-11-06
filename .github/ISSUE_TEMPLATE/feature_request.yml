@@ -1,0 +1,12 @@
+name: Feature request
+description: An idea for Docker Steward
+title: "[idea] "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What would you like to do
+      description: The task first, then how you imagine it working.
+    validations:
+      required: true
