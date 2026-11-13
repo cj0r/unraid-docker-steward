@@ -440,7 +440,7 @@
       case 'm-web': { closeMenu(); const r = find(name); if (r && r.url) window.open(r.url, '_blank', 'noopener'); return; }
       case 'm-console': { closeMenu(); const r = find(name); if (r && typeof openTerminal === 'function') openTerminal('docker', name, r.shell); return; }
       case 'm-logs': closeMenu(); if (typeof openTerminal === 'function') openTerminal('docker', name, '.log'); return;
-      case 'm-edit': { closeMenu(); const r = find(name); if (r && r.tpl) location.href = EDIT + r.tpl; return; }
+      case 'm-edit': { closeMenu(); const r = find(name); if (r && r.tpl) location.href = EDIT + encodeURIComponent(r.tpl); return; }
       case 'm-checkupdate': closeMenu(); enqueue([name], 'update'); return;
       case 'm-force':
         closeMenu();

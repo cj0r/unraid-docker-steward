@@ -18,13 +18,15 @@ jobs:
     if: github.repository == 'cj0r/unraid-docker-steward'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
         with:
           ref: ${{ inputs.tag || github.ref }}
       - name: Tag matches the plugin version
+        env:
+          TAG_IN: ${{ inputs.tag || github.ref_name }}
         run: |
           want="$(sed -n 's/.*<!ENTITY version *"\([^"]*\)".*/\1/p' plugin/docker.steward.plg)"
-          TAG="${{ inputs.tag || github.ref_name }}"; echo "TAG=$TAG" >> "$GITHUB_ENV"
+          TAG="$TAG_IN"; echo "TAG=$TAG" >> "$GITHUB_ENV"
           test "v$want" = "$TAG" || { echo "Tag $TAG but the plugin says $want"; exit 1; }
           echo "VERSION=$want" >> "$GITHUB_ENV"
       - name: Package checksums match
