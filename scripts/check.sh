@@ -19,7 +19,7 @@ pkg=archive/docker.steward-$ver-noarch-1.txz
 [ -f "$pkg" ] || fail "missing $pkg (run ./build.sh)"
 [ "$(md5sum "$pkg" | cut -d' ' -f1)" = "$md5" ] || fail "md5 in plg does not match $pkg"
 [ "$(sha256sum "$pkg" | cut -d' ' -f1)" = "$sha" ] || fail "sha256 in plg does not match $pkg"
-n=$(ls archive/*.txz | wc -l); [ "$n" -ge 1 ] && [ "$n" -le 2 ] || fail "archive/ must hold the current package and at most the previous one"
+n=$(ls archive/*.txz | wc -l); [ "$n" -ge 1 ] && [ "$n" -le 3 ] || fail "archive/ must hold the current package and at most the previous two"
 grep -q "^## $ver\$" CHANGELOG.md || fail "CHANGELOG.md has no '## $ver' section"
 grep -q "^###$ver\$" "$PLG" || fail "plg <CHANGES> has no '###$ver' entry"
 grep -q "\"$(python3 -c "import json;print(json.load(open('$P/compat.json'))['tested'][-1])")\"" $P/compat.json || fail "compat.json tested list empty"

@@ -143,3 +143,9 @@ body.Theme--white .stw-menu, body.Theme--azure .stw-menu { background: #fff; }
   .sweet-alert.stw-pop pre#swaltext, .sweet-alert.stw-pop .logLine { font-size: .75rem; line-height: 1.25rem; }
   .sweet-alert.stw-pop h2 { font-size: 1rem; }
 }
+
+/* container actions: WebUI link, uptime line, menu separators */
+.stw-web { font-size: .78em; text-decoration: none; opacity: .8; }
+.stw-web:hover { opacity: 1; text-decoration: underline; }
+.stw-up { font-size: .8em; opacity: .55; }
+.stw-menu hr { border: 0; border-top: 1px solid var(--line); margin: .25rem .3rem; }

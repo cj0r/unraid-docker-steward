@@ -2,9 +2,9 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "docker.steward">
 <!ENTITY author    "cj0r">
-<!ENTITY version   "2026.11.13">
-<!ENTITY md5       "99b684ef5dd74547b25d99324e32651d">
-<!ENTITY sha256    "bb3c9dcc48823b8fcf34b25e61b4bbd9645520a86f6025b0b4e666679e6481a2">
+<!ENTITY version   "2026.11.13a">
+<!ENTITY md5       "6641c47dcd5cb8d435ed8a56112c12ff">
+<!ENTITY sha256    "1c5e86d964ede8c99cb03dce00b7d0ddef47f3481d7559deedbc5aaec8f802d3">
 <!ENTITY launch    "Docker/Steward">
 <!ENTITY repo      "cj0r/unraid-docker-steward">
 <!ENTITY branch    "main">
@@ -25,6 +25,13 @@
         support="https://github.com/&repo;/issues">
 
 <CHANGES>
+###2026.11.13a
+- Row menu: Start, Stop, Pause, Resume and Restart, through Unraid's own Docker functions
+- Row menu: WebUI, Console, Logs, and Edit (opens Unraid's container editor)
+- Rows show the container's uptime and a WebUI link while it is running
+- docker-steward-selftest reports whether container actions are available
+- Tested on Unraid 7.3.1
+
 ###2026.11.13
 - Plugins page: added the title, a description and a Support Thread link
 

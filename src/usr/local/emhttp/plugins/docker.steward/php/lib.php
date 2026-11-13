@@ -63,13 +63,18 @@ function stw_compat() {
       }
     } catch (Throwable $e) { $list[] = 'reading containers failed: ' . $e->getMessage(); }
   }
+  // Start/stop/pause/restart go through Unraid's own Events.php and DockerClient; if either is missing the menu simply omits them.
+  $actions = is_file("$docroot/plugins/dynamix.docker.manager/include/Events.php") && !$list;
+  if ($actions) foreach (['startContainer', 'stopContainer', 'restartContainer', 'pauseContainer', 'resumeContainer'] as $m) {
+    if (!method_exists('DockerClient', $m)) $actions = false;
+  }
   if (!is_executable("$docroot/plugins/dynamix.docker.manager/scripts/update_container")) $upd[] = 'Unraid\'s update_container script was not found';
   if ($ver !== '' && version_compare($ver, $min, '<')) $upd[] = "Unraid $ver is older than the supported minimum $min";
 
   $level = $list ? 'broken' : ($upd ? 'degraded' : (($ver !== '' && !in_array($ver, $tested, true)) ? 'untested' : 'ok'));
   return $cache = [
     'level' => $level, 'problems' => array_merge($list, $upd),
-    'lists' => !$list, 'updates' => !$list && !$upd,
+    'lists' => !$list, 'updates' => !$list && !$upd, 'actions' => $actions,
     'unraid' => $ver, 'tested' => $tested, 'min' => $min,
   ];
 }
@@ -167,6 +172,12 @@ function stw_snapshot() {
     elseif ($mgr !== 'dockerman') $why = 'unmanaged';
     elseif (empty($inf['template'])) $why = 'notemplate';
 
+    // Only plain http(s) WebUI links, and only editor templates that really sit in Unraid's template folder.
+    $url = (string)($inf['url'] ?? '');
+    if (!preg_match('#^https?://[^\[\]\s]+$#i', $url)) $url = '';   // unresolved [IP]/[PORT] placeholders are not a link
+    $tpl = (string)($inf['template'] ?? '');
+    if (strpos($tpl, '/boot/config/plugins/dockerMan/templates-user/') !== 0 || strpos($tpl, '..') !== false || !is_file($tpl)) $tpl = '';
+
     $own = $notes['at'][$tag] ?? null;
     $rows[] = [
       'n'       => $i + 1,
@@ -180,6 +191,10 @@ function stw_snapshot() {
       'local'   => stw_digest($st['local'] ?? ''),
       'remote'  => stw_digest($st['remote'] ?? ''),
       'checked' => $own !== null ? (int)$own : ($notes['after'] === $mt ? (int)$notes['base'] : $mt),
+      'status'  => (string)($c['Status'] ?? ''),
+      'url'     => $url,
+      'tpl'     => $tpl,
+      'shell'   => (string)($inf['shell'] ?? ''),
       'can'     => $why === '',
       'why'     => $why,
     ];

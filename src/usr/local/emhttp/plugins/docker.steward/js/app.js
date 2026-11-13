@@ -3,6 +3,8 @@
 (function () {
   'use strict';
   const BASE = '/plugins/docker.steward/php/';
+  const EVENTS = '/plugins/dynamix.docker.manager/include/Events.php';   // Unraid's own container actions
+  const EDIT = '/Docker/UpdateContainer?xmlTemplate=edit:';                // Unraid's own editor
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -32,7 +34,7 @@
     sort: loadJson('stw.sort', { key: 'n', dir: 1 }),
     open: loadJson('stw.open', {}),
     queue: [], working: false, total: 0, done: 0,
-    pending: new Map(), errors: new Map(),
+    pending: new Map(), errors: new Map(), ctl: new Map(),
     run: null, sub: false, popup: false, snap: '', notice: null, menuFor: null, pollTimer: null,
   };
 
@@ -56,17 +58,19 @@
     if (d < 86400) return Math.round(d / 3600) + ' h ago';
     return Math.round(d / 86400) + ' d ago';
   }
-  function post(file, data) {
+  function post(file, data) { return postTo(BASE + file, data); }
+  function postTo(url, data) {
     const body = Object.assign({}, data);
     if (window.csrf_token) body.csrf_token = window.csrf_token;
     return new Promise((resolve) => {
-      jQuery.post(BASE + file, body).done((r) => resolve(r || {})).fail((x) => {
+      jQuery.post(url, body).done((r) => resolve(r || {})).fail((x) => {
         let r = {}; try { r = JSON.parse(x.responseText); } catch (e) {}
         resolve(Object.assign({ ok: false, code: 'http' + x.status }, r));
       });
     });
   }
   const updatesOk = () => !S.compat || S.compat.updates;
+  const actionsOk = () => !!(S.compat && S.compat.actions);
   const runActive = () => !!(S.run && !S.run.finished);
   const find = (name) => S.rows.find((r) => r.name === name);
   const runItem = (name) => (S.run ? S.run.items.find((i) => i.name === name) : null);
@@ -99,12 +103,14 @@
 
   /* ---------------------------------------------------------- rendering */
   function statCell(r) {
-    const it = runItem(r.name), p = S.pending.get(r.name);
+    const it = runItem(r.name), p = S.pending.get(r.name), ct = S.ctl.get(r.name);
     let chip;
     // A finished run's "Updated" chip must not hide a newer update found since.
     if (it && (runActive() || it.state === 'failed' || r.verdict !== 'available')) {
       const m = { queued: ['Queued', 'unk'], running: ['Updating…', 'busy'], done: ['Updated ✓', 'ok'], unchanged: ['Already current', 'unk'], failed: ['Update failed', 'bad'] }[it.state];
       chip = `<span class="stw-chip ${m[1]}">${m[0]}</span>`;
+    } else if (ct) {
+      chip = `<span class="stw-chip busy">${esc(ct)}…</span>`;
     } else if (p) {
       chip = `<span class="stw-chip busy">${p === 'checking' ? 'Checking…' : 'Waiting…'}</span>`;
     } else {
@@ -122,7 +128,7 @@
   }
 
   function actCell(r) {
-    const off = runActive() || S.pending.has(r.name) ? ' aria-disabled="true"' : '';
+    const off = runActive() || S.pending.has(r.name) || S.ctl.has(r.name) ? ' aria-disabled="true"' : '';
     const main = r.can && updatesOk() && r.verdict === 'available'
       ? `<button type="button" class="stw-btn stw-main" data-act="update"${off}>Update</button>`
       : `<button type="button" class="stw-btn" data-act="check"${off}>${r.verdict === 'current' ? 'Re-check' : 'Check'}</button>`;
@@ -137,8 +143,8 @@
     return `<li class="stw-row${it && it.state === 'running' ? ' working' : ''}" data-name="${esc(r.name)}">
       <input type="checkbox" class="stw-cb" data-act="sel" aria-label="Select ${esc(r.name)}"${S.sel.has(r.name) ? ' checked' : ''}>
       <span class="stw-ico">${icon}</span>
-      <div class="stw-who"><div class="stw-title"><span class="stw-nm">${esc(r.name)}</span><span class="stw-st ${cls}" title="${label}"><i></i>${label}</span><span class="stw-prio" title="Priority on the Docker page">#${r.n}</span></div>
-        <div class="stw-img">${esc(r.image)}</div></div>
+      <div class="stw-who"><div class="stw-title"><span class="stw-nm">${esc(r.name)}</span>${r.running && !r.paused && r.url ? `<a class="stw-web" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer" title="Open WebUI" aria-label="Open WebUI of ${esc(r.name)}">WebUI ↗</a>` : ''}<span class="stw-st ${cls}" title="${label}"><i></i>${label}</span><span class="stw-prio" title="Priority on the Docker page">#${r.n}</span></div>
+        <div class="stw-img">${esc(r.image)}</div>${r.status ? `<div class="stw-up">${esc(r.status)}</div>` : ''}</div>
       <div class="stw-stat">${statCell(r)}</div>
       <div class="stw-act">${actCell(r)}</div>
       ${it && it.state === 'running' ? '<div class="stw-prog"><i></i></div>' : ''}</li>`;
@@ -368,13 +374,46 @@
     S.menuFor = name;
     const m = $('stw-menu');
     const item = (act, label, off, hint) => `<button type="button" role="menuitem" data-act="${act}"${off ? ' aria-disabled="true"' : ''}>${label}${hint ? `<small>${hint}</small>` : ''}</button>`;
-    m.innerHTML = item('m-check', 'Check for update')
+    const busy = runActive() || S.ctl.has(name);
+    const live = r.running && !r.paused;
+    let html = '';
+    if (live && r.url) html += item('m-web', 'Open WebUI');
+    if (live && typeof openTerminal === 'function') html += item('m-console', 'Console');
+    if (typeof openTerminal === 'function') html += item('m-logs', 'Logs');
+    if (actionsOk()) {
+      html += '<hr>';
+      if (!r.running) html += item('m-start', 'Start', busy);
+      else {
+        if (r.paused) html += item('m-resume', 'Resume', busy);
+        else html += item('m-stop', 'Stop', busy) + item('m-pause', 'Pause', busy);
+        html += item('m-restart', 'Restart', busy);
+      }
+    }
+    if (r.tpl) html += item('m-edit', 'Edit', false, 'opens Unraid\'s editor');
+    html += '<hr>' + item('m-check', 'Check for update')
       + item('m-checkupdate', 'Check and update now', !r.can, r.can ? '' : 'not updatable here')
       + item('m-force', 'Force update (re-pull)', !r.can, r.can ? 'even if already current' : 'not updatable here');
+    m.innerHTML = html;
     m.hidden = false;
     const b = btn.getBoundingClientRect(), w = m.offsetWidth, h = m.offsetHeight;
     m.style.left = Math.max(8, Math.min(b.right - w, innerWidth - w - 8)) + 'px';
     m.style.top = (b.bottom + h + 8 > innerHeight ? Math.max(8, b.top - h - 4) : b.bottom + 4) + 'px';
+  }
+
+  /* Start, stop, pause, resume and restart are sent to Unraid's own Events.php, the endpoint the stock Docker
+   * page uses, with the same parameters. It answers {success: true} or {success: "<message>"}. */
+  const VERBS = { start: 'Starting', stop: 'Stopping', pause: 'Pausing', resume: 'Resuming', restart: 'Restarting' };
+  async function control(action, name) {
+    const r = find(name);
+    if (!r || !r.id || !actionsOk() || runActive() || S.ctl.has(name)) return;
+    S.ctl.set(name, VERBS[action]); S.errors.delete(name); renderGroups();
+    const res = await postTo(EVENTS, { action, container: r.id });
+    if (!(res && res.success === true)) {
+      const msg = res && typeof res.success === 'string' ? res.success : res && res.error;
+      S.errors.set(name, String(msg || 'Unraid did not accept the request.').replace(/<[^>]*>/g, ''));
+    }
+    S.ctl.delete(name);
+    await load();
   }
 
   const groupRows = (id) => shown().filter(GROUPS.find((g) => g.id === id).test);
@@ -397,6 +436,11 @@
       case 'check-group': enqueue(groupRows(el.dataset.g).map((r) => r.name)); return;
       case 'menu': S.menuFor === name && !$('stw-menu').hidden ? closeMenu() : openMenu(name, el); return;
       case 'm-check': closeMenu(); enqueue([name]); return;
+      case 'm-start': case 'm-stop': case 'm-pause': case 'm-resume': case 'm-restart': closeMenu(); control(act.slice(2), name); return;
+      case 'm-web': { closeMenu(); const r = find(name); if (r && r.url) window.open(r.url, '_blank', 'noopener'); return; }
+      case 'm-console': { closeMenu(); const r = find(name); if (r && typeof openTerminal === 'function') openTerminal('docker', name, r.shell); return; }
+      case 'm-logs': closeMenu(); if (typeof openTerminal === 'function') openTerminal('docker', name, '.log'); return;
+      case 'm-edit': { closeMenu(); const r = find(name); if (r && r.tpl) location.href = EDIT + r.tpl; return; }
       case 'm-checkupdate': closeMenu(); enqueue([name], 'update'); return;
       case 'm-force':
         closeMenu();

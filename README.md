@@ -36,6 +36,7 @@ On a phone:
 
 - **Per-container actions:** Check, Update and Re-check on every row, plus a menu with Check and update now and
   Force update (re-pull).
+- **Container controls:** Start, Stop, Pause, Resume and Restart, plus WebUI, Console and Logs, from each row's menu, with the uptime shown on the row. These use Unraid's own Docker functions, the same ones the Docker page calls. **Edit** opens Unraid's own container editor; Docker Steward never reads or writes container templates.
 - **Bulk actions:** Check selected, Update selected, Check all and Check & update. Updates run in your Docker page
   priority order, after a confirmation.
 - **Grouped by what needs doing:** Needs update, Not checked yet, Up to date, Cannot be updated here. Search and sort.

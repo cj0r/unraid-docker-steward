@@ -11,6 +11,7 @@ $c = stw_compat();
 echo "Unraid version : ", $c['unraid'] ?: 'unknown', "\n";
 echo "Tested on      : ", implode(', ', $c['tested']) ?: 'nothing recorded', " (minimum {$c['min']})\n";
 echo "Compatibility  : {$c['level']}\n";
+echo "Container actions: ", $c["actions"] ? "available" : "not available", "\n";
 foreach ($c['problems'] as $p) echo "  - $p\n";
 $ok = $c['lists'];
 if ($ok) {
