@@ -4,6 +4,11 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:      # re-run for an existing tag if the tag push did not start it
+    inputs:
+      tag:
+        description: Existing tag to release (for example v2026.11.07a)
+        required: true
 
 permissions:
   contents: write   # create the GitHub release
@@ -14,10 +19,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
       - name: Tag matches the plugin version
         run: |
           want="$(sed -n 's/.*<!ENTITY version *"\([^"]*\)".*/\1/p' plugin/docker.steward.plg)"
-          test "v$want" = "$GITHUB_REF_NAME" || { echo "Tag $GITHUB_REF_NAME but the plugin says $want"; exit 1; }
+          TAG="${{ inputs.tag || github.ref_name }}"; echo "TAG=$TAG" >> "$GITHUB_ENV"
+          test "v$want" = "$TAG" || { echo "Tag $TAG but the plugin says $want"; exit 1; }
           echo "VERSION=$want" >> "$GITHUB_ENV"
       - name: Package checksums match
         run: |
@@ -31,5 +39,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           awk -v v="## $VERSION" '$0==v{f=1;next} /^## /{f=0} f' CHANGELOG.md > notes.md
-          gh release create "$GITHUB_REF_NAME" "archive/docker.steward-$VERSION-noarch-1.txz" \
+          gh release create "$TAG" "archive/docker.steward-$VERSION-noarch-1.txz" \
             --title "Docker Steward $VERSION" --notes-file notes.md

@@ -2,9 +2,9 @@
 <!DOCTYPE PLUGIN [
 <!ENTITY name      "docker.steward">
 <!ENTITY author    "cj0r">
-<!ENTITY version   "2026.11.07a">
-<!ENTITY md5       "4067866dc930e73349ce5431e961d114">
-<!ENTITY sha256    "da7a968bfca4dd25f04efd78ba24dc047680fc5e819c61b9606e2cde486c9df7">
+<!ENTITY version   "2026.11.13">
+<!ENTITY md5       "99b684ef5dd74547b25d99324e32651d">
+<!ENTITY sha256    "bb3c9dcc48823b8fcf34b25e61b4bbd9645520a86f6025b0b4e666679e6481a2">
 <!ENTITY launch    "Docker/Steward">
 <!ENTITY repo      "cj0r/unraid-docker-steward">
 <!ENTITY branch    "main">
@@ -21,9 +21,13 @@
         launch="&launch;"
         pluginURL="&pluginURL;"
         icon="refresh"
-        min="7.0.0">
+        min="7.0.0"
+        support="https://github.com/&repo;/issues">
 
 <CHANGES>
+###2026.11.13
+- Plugins page: added the title, a description and a Support Thread link
+
 ###2026.11.07a
 - First release. Per-container Check, Update and Re-check, a row menu (Check, Check and update now, Force update), and bulk Check selected, Update selected, Check all and Check and update
 - Containers grouped by Needs update, Not checked yet, Up to date and Cannot be updated here; search and sort; phone layout
