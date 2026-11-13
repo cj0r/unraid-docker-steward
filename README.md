@@ -5,8 +5,9 @@
   <img src="https://img.shields.io/badge/Unraid-7.0%2B-orange?style=flat-square" alt="Unraid 7.0+">
 </p>
 
-An Unraid plugin for looking after Docker containers. One page shows what needs updating and lets you check or update
-a single container, a selection, or everything, with live progress.
+An Unraid plugin for looking after Docker containers. One page lists your containers, shows what needs updating, and
+lets you check or update a single container, a selection, or everything, with live progress. Each container's menu also
+starts, stops, pauses and restarts it, opens its WebUI, console and logs, and opens Unraid's own editor.
 
 > [!WARNING]
 > Docker Steward is provided **as is, with no warranty, and you use it at your own risk**. Updating **recreates
@@ -22,7 +23,7 @@ Demo data, not a real server.
 | | |
 |---|---|
 | ![Row menu](docs/screenshots/row-menu.webp) | ![Selecting containers for a bulk action](docs/screenshots/selection.webp) |
-| **Row menu:** check, check and update now, force update | **Selection:** bulk Check, Update and Check & update |
+| **Row menu:** start, stop, pause, restart, WebUI, console, logs, edit, and update actions | **Selection:** bulk Check, Update and Check & update |
 | ![Update in progress](docs/screenshots/progress.webp) | ![Live update output](docs/screenshots/progress-popup.webp) |
 | **Progress:** runs continue in the background | **Live output** from Unraid's update script |
 
@@ -34,9 +35,13 @@ On a phone:
 
 ## Features
 
-- **Per-container actions:** Check, Update and Re-check on every row, plus a menu with Check and update now and
+- **Per-container update actions:** Check, Update and Re-check on every row, plus a menu with Check and update now and
   Force update (re-pull).
-- **Container controls:** Start, Stop, Pause, Resume and Restart, plus WebUI, Console and Logs, from each row's menu, with the uptime shown on the row. These use Unraid's own Docker functions, the same ones the Docker page calls. **Edit** opens Unraid's own container editor; Docker Steward never reads or writes container templates.
+- **Container controls:** Start, Stop, Pause, Resume and Restart from each row's menu, with the container's uptime and a
+  WebUI link on the row. These go through Unraid's own Docker functions, the same ones the Docker page calls, and are
+  switched off while an update run is in progress.
+- **WebUI, Console and Logs:** open the container's web interface and Unraid's own console and log windows.
+- **Edit:** opens Unraid's own container editor. Docker Steward never reads or writes container templates.
 - **Bulk actions:** Check selected, Update selected, Check all and Check & update. Updates run in your Docker page
   priority order, after a confirmation.
 - **Grouped by what needs doing:** Needs update, Not checked yet, Up to date, Cannot be updated here. Search and sort.
@@ -46,7 +51,8 @@ On a phone:
   versions each release was tested on.
 - **Command line:** `docker-steward-check <name> [--json]` and `docker-steward-selftest`.
 
-No Unraid file is modified. It uses Unraid's own update check and the same update script as the Docker page.
+No Unraid file is modified. It uses Unraid's own update check, update script and container controls, the same ones the
+Docker page uses.
 
 ## Install
 
@@ -77,6 +83,8 @@ the full legal text. In plain terms:
 - **You use it entirely at your own risk.** The author and contributors accept no responsibility or liability for
   stopped or broken containers, lost data, failed or partial updates, downtime, security incidents, or any other
   damage from using or misusing it.
+- **Controls change your containers.** Stop, Pause and Restart interrupt the service a container provides, and a
+  stopped container stays stopped until you start it.
 - **Updating changes your containers.** An update pulls a new image, then stops, removes and recreates the container.
   A new image version can break an application or its data. Keep backups and know how to roll back.
 - **It runs with full administrator rights** inside the Unraid web interface. Only install software you trust.
